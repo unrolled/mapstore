@@ -6,5 +6,5 @@ help: ## Displays this help message.
 
 test: ## Runs the tests and vetting.
 	staticcheck $$(go list . | grep -v /vendor/)
-	go test -cover -race -count=1 .
+	go test -v -cover -race -count=1 .
 	go vet .
