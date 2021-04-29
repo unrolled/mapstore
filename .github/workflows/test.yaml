@@ -22,5 +22,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Dependencies
         run: go get -u honnef.co/go/tools/cmd/staticcheck
+        env:
+          GO111MODULE: off
       - name: Test
         run: make test
