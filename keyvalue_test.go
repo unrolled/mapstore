@@ -2,6 +2,7 @@ package mapstore
 
 import (
 	"context"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,6 +21,30 @@ func TestKeyValueNew(t *testing.T) {
 	kv, err := NewKeyValue(name, false)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
+}
+
+func TestKeyValueKeys(t *testing.T) {
+	setKeyValueFakeKubeClient(t, testNamespace)
+
+	name := "testmap"
+	kv, err := NewKeyValue(name, true)
+	assert.NoError(t, err)
+	assert.NotNil(t, kv)
+
+	// Set a value.
+	kv.Set("k1", []byte("v1"))
+	kv.Set("k2", []byte("v2"))
+	kv.Set("k3", []byte("v3"))
+	kv.Set("k4", []byte("v4"))
+	kv.Set("k5", []byte("v5"))
+	assert.Len(t, kv.internalCache, 5)
+
+	// Should return data now.
+	keys, err := kv.Keys()
+	assert.NoError(t, err)
+	sort.Strings(keys)
+
+	assert.Equal(t, []string{"k1", "k2", "k3", "k4", "k5"}, keys)
 }
 
 func TestKeyValueGetMapData(t *testing.T) {

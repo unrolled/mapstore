@@ -14,6 +14,7 @@ var ErrKeyValueNotFound = fmt.Errorf("key was not found")
 
 // KeyValueInterface defines the required methods to satisfy the KeyValue implementation.
 type KeyValueInterface interface {
+	Keys() ([]string, error)
 	Get(key string) ([]byte, error)
 	Set(key string, value []byte) error
 	Delete(key string) error
@@ -76,6 +77,25 @@ func (k *KeyValue) getMapData() (map[string][]byte, error) {
 	}
 
 	return data, nil
+}
+
+func (k *KeyValue) Keys() ([]string, error) {
+	k.RLock()
+	defer k.RUnlock()
+
+	// Grab the data map.
+	dataMap, err := k.getMapData()
+	if err != nil {
+		return nil, err
+	}
+
+	// Lookup all the keys.
+	keys := make([]string, 0, len(dataMap))
+	for k := range dataMap {
+		keys = append(keys, k)
+	}
+
+	return keys, nil
 }
 
 // Get uses the supplied key and attempts to return the coorsponding value from the ConfigMap.
