@@ -16,6 +16,7 @@ var ErrKeyValueNotFound = fmt.Errorf("key was not found")
 type KeyValueInterface interface {
 	Get(key string) ([]byte, error)
 	Set(key string, value []byte) error
+	Delete(key string) error
 }
 
 // Verify we meet the requirements for our own internface ;)
@@ -26,6 +27,7 @@ type KeyValue struct {
 	*sync.RWMutex
 	configmapName string
 	client        *KubeClient
+	cacheEnabled  bool
 	internalCache map[string][]byte
 }
 
@@ -38,11 +40,11 @@ func NewKeyValue(cmName string, cacheInternally bool) (*KeyValue, error) {
 	}
 
 	// If we are caching internally, fetch the data first.
-	var cache map[string][]byte
+	cache := map[string][]byte{}
 	if cacheInternally {
 		if cm, err := kubeClient.getOrCreateConfigMap(cmName); err != nil {
 			return nil, err
-		} else {
+		} else if cm.BinaryData != nil {
 			cache = cm.BinaryData
 		}
 	}
@@ -51,12 +53,13 @@ func NewKeyValue(cmName string, cacheInternally bool) (*KeyValue, error) {
 		RWMutex:       &sync.RWMutex{},
 		configmapName: cmName,
 		client:        kubeClient,
+		cacheEnabled:  cacheInternally,
 		internalCache: cache,
 	}, nil
 }
 
 func (k *KeyValue) getMapData() (map[string][]byte, error) {
-	if k.internalCache != nil {
+	if k.cacheEnabled {
 		return k.internalCache, nil
 	}
 
@@ -100,15 +103,29 @@ func (k *KeyValue) Set(key string, value []byte) error {
 	k.Lock()
 	defer k.Unlock()
 
+	return k.set(key, value, false)
+}
+
+// ForceSet is the same as Set, but does not check if the values are equal first.
+func (k *KeyValue) ForceSet(key string, value []byte) error {
+	k.Lock()
+	defer k.Unlock()
+
+	return k.set(key, value, true)
+}
+
+func (k *KeyValue) set(key string, value []byte, force bool) error {
 	// Grab the data map.
 	dataMap, err := k.getMapData()
 	if err != nil {
 		return err
 	}
 
-	// Look up the original value and check if it's the same.
-	if ogValue, ok := dataMap[key]; ok && bytes.Equal(ogValue, value) {
-		return nil
+	if !force {
+		// Look up the original value and check if it's the same.
+		if ogValue, ok := dataMap[key]; ok && bytes.Equal(ogValue, value) {
+			return nil
+		}
 	}
 
 	// Set the new value.
@@ -118,8 +135,8 @@ func (k *KeyValue) Set(key string, value []byte) error {
 	return k.client.Set(k.configmapName, dataMap)
 }
 
-// ForceSet is the same as Set, but does not check if the values are equal first.
-func (k *KeyValue) ForceSet(key string, value []byte) error {
+// Delete removes the given key from the underlying configmap.
+func (k *KeyValue) Delete(key string) error {
 	k.Lock()
 	defer k.Unlock()
 
@@ -129,8 +146,8 @@ func (k *KeyValue) ForceSet(key string, value []byte) error {
 		return err
 	}
 
-	// Set the new value.
-	dataMap[key] = value
+	// Delete the key/value.
+	delete(dataMap, key)
 
 	// Write the ConfigMap.
 	return k.client.Set(k.configmapName, dataMap)

@@ -16,7 +16,7 @@ import (
 
 const MaxConfigMapSize = 1024
 
-var clusterConfigPathEnv = "CLUSTER_CONFIG_PATH"
+var clusterConfigPathEnv = "MAPSTORE_CLUSTER_CONFIG_PATH"
 var singleton *KubeClient
 
 // KubeClient wires up the connection to the cluster.
@@ -48,7 +48,7 @@ func VerifyConnection(testMapName string, client *KubeClient) error {
 	if data, err := client.Get(testMapName); err != nil {
 		return err
 	} else if dataVal, ok := data["test"]; !ok || string(dataVal) != val {
-		return fmt.Errorf("got configmap, but data is mismatch")
+		return fmt.Errorf("got configmap, but data is mismatched")
 	}
 
 	// Delete a value.

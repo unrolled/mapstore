@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEnv(t *testing.T) {
+func TestNamespaceEnv(t *testing.T) {
 	os.Setenv(namespaceEnv, testNamespace)
 
 	result, err := getNamespace()
@@ -17,7 +17,7 @@ func TestEnv(t *testing.T) {
 	assert.Equal(t, testNamespace, result)
 }
 
-func TestGoodFile(t *testing.T) {
+func TestNamespaceGoodFile(t *testing.T) {
 	os.Unsetenv(namespaceEnv)
 
 	result, err := getNamespace()
@@ -27,7 +27,7 @@ func TestGoodFile(t *testing.T) {
 	assert.Equal(t, testNamespace, result)
 }
 
-func TestBadFile(t *testing.T) {
+func TestNamespaceBadFile(t *testing.T) {
 	// Makes sure env is blank.
 	os.Unsetenv(namespaceEnv)
 	// Also set config path to something random.

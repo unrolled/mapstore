@@ -187,3 +187,48 @@ func TestKeyValueForceSetWithInternalCache(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []byte("world"), data)
 }
+
+func TestKeyValueDelete(t *testing.T) {
+	setKeyValueFakeKubeClient(t, testNamespace)
+
+	name := "testmap"
+	kv, err := NewKeyValue(name, false)
+	assert.NoError(t, err)
+	assert.NotNil(t, kv)
+
+	err = kv.Set("hello", []byte("world"))
+	assert.NoError(t, err)
+
+	val, err := kv.Get("hello")
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("world"), val)
+
+	err = kv.Delete("hello")
+	assert.NoError(t, err)
+
+	_, err = kv.Get("hello")
+	assert.Error(t, err)
+	assert.Equal(t, ErrKeyValueNotFound, err)
+}
+
+func TestKeyValueDeleteCached(t *testing.T) {
+	setKeyValueFakeKubeClient(t, testNamespace)
+
+	name := "testmap"
+	kv, err := NewKeyValue(name, true)
+	assert.NoError(t, err)
+	assert.NotNil(t, kv)
+
+	err = kv.Set("hello", []byte("world"))
+	assert.NoError(t, err)
+	assert.Len(t, kv.internalCache, 1)
+
+	err = kv.Delete("hello")
+	assert.NoError(t, err)
+	assert.Len(t, kv.internalCache, 0)
+
+	_, err = kv.Get("hello")
+	assert.Error(t, err)
+	assert.Equal(t, ErrKeyValueNotFound, err)
+	assert.Len(t, kv.internalCache, 0)
+}
