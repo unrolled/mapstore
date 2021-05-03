@@ -1,0 +1,3 @@
+# Mapstore Sidecar
+
+todo

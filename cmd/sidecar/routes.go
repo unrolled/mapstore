@@ -20,7 +20,7 @@ func api() http.HandlerFunc {
 		pathParts := strings.Split(strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/"), "/"), "/")
 		if len(pathParts) != 2 {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("invalid path"))
+			w.Write([]byte("invalid request, path needs two parts: '/configmap-name/key'"))
 			return
 		}
 

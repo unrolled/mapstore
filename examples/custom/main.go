@@ -8,55 +8,54 @@ import (
 	"github.com/unrolled/mapstore"
 )
 
-type myCustomData struct {
+type userObject struct {
 	ID       int64  `json:"id"`
 	UserName string `json:"username"`
 	Email    string `json:"email"`
 }
 
-type customWrapper struct {
+type userStore struct {
 	kvStore mapstore.KeyValueInterface
 }
 
-func (c *customWrapper) Get(key string) (*myCustomData, error) {
-	val, err := c.kvStore.Get(key)
+func (u *userStore) Get(key string) (*userObject, error) {
+	val, err := u.kvStore.Get(key)
 	if err != nil {
 		return nil, err
 	}
 
-	var result *myCustomData
+	var result *userObject
 	json.Unmarshal(val, result)
 
 	return result, err
 }
 
-func (c *customWrapper) Set(key string, val *myCustomData) error {
+func (u *userStore) Set(key string, val *userObject) error {
 	result, err := json.Marshal(val)
 	if err != nil {
 		return err
 	}
 
-	return c.kvStore.Set(key, result)
+	return u.kvStore.Set(key, result)
 }
 
 func main() {
-	mapStore, err := mapstore.NewKeyValue("my-custom-config-map-name", false)
+	cacheConfigMapInternally := false
+	mapStore, err := mapstore.NewKeyValue("my-custom-config-map-name", cacheConfigMapInternally)
 	if err != nil {
 		log.Fatalf("error creating mapstore: %v", err)
 	}
 
-	wrapper := &customWrapper{mapStore}
-	initialData := &myCustomData{ID: 1234, UserName: "me", Email: "me@example.com"}
+	wrapper := &userStore{mapStore}
+	initialData := &userObject{ID: 1234, UserName: "FooBar", Email: "mapstore@unrolled.ca"}
 
-	// Setting the custom value.
+	// Setting the user data.
 	err = wrapper.Set("my-key", initialData)
 	if err != nil {
 		log.Fatalf("error setting value: %v", err)
 	}
 
-	// ...
-
-	// Getting the custom value.
+	// Getting the user data.
 	freshData, err := wrapper.Get("my-key")
 	if err != nil {
 		log.Fatalf("error getting value: %v", err)

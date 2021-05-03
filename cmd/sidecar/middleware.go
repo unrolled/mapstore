@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/unrolled/slog"
@@ -13,13 +12,7 @@ import (
 func basicAuth(handler http.HandlerFunc, allowedUser, allowedPassword string) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		user, password, ok := req.BasicAuth()
-		if !ok || len(strings.TrimSpace(user)) == 0 || len(strings.TrimSpace(password)) == 0 {
-			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		if user != allowedUser || password != allowedPassword {
+		if !ok || user != allowedUser || password != allowedPassword {
 			w.Header().Set("WWW-Authenticate", "Basic realm=Restricted")
 			w.WriteHeader(http.StatusUnauthorized)
 			return
