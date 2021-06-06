@@ -9,34 +9,34 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func setKeyValueFakeKubeClient(t *testing.T, ns string) {
-	singleton = &KubeClient{fake.NewSimpleClientset(), context.Background(), ns}
+const kvTestName = "foobar"
+
+func setKeyValueFakeKubeClient(t *testing.T) {
+	singleton = &KubeClient{fake.NewSimpleClientset(), context.Background(), testNamespace}
 	t.Cleanup(func() { singleton = nil })
 }
 
 func TestKeyValueNew(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, false)
+	kv, err := NewKeyValue(kvTestName, false)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 }
 
 func TestKeyValueKeys(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, true)
+	kv, err := NewKeyValue(kvTestName, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 
 	// Set a value.
-	kv.Set("k1", []byte("v1"))
-	kv.Set("k2", []byte("v2"))
-	kv.Set("k3", []byte("v3"))
-	kv.Set("k4", []byte("v4"))
-	kv.Set("k5", []byte("v5"))
+	assert.NoError(t, kv.Set("k1", []byte("v1")))
+	assert.NoError(t, kv.Set("k2", []byte("v2")))
+	assert.NoError(t, kv.Set("k3", []byte("v3")))
+	assert.NoError(t, kv.Set("k4", []byte("v4")))
+	assert.NoError(t, kv.Set("k5", []byte("v5")))
 	assert.Len(t, kv.internalCache, 5)
 
 	// Should return data now.
@@ -48,10 +48,9 @@ func TestKeyValueKeys(t *testing.T) {
 }
 
 func TestKeyValueGetMapData(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, false)
+	kv, err := NewKeyValue(kvTestName, false)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 
@@ -71,10 +70,9 @@ func TestKeyValueGetMapData(t *testing.T) {
 }
 
 func TestKeyValueGetMapDataWithInternalCache(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, true)
+	kv, err := NewKeyValue(kvTestName, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 	kv.internalCache = map[string][]byte{"foo": []byte("bar")}
@@ -86,10 +84,9 @@ func TestKeyValueGetMapDataWithInternalCache(t *testing.T) {
 }
 
 func TestKeyValueGet(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, true)
+	kv, err := NewKeyValue(kvTestName, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 	kv.internalCache = map[string][]byte{"foo": []byte("bar")}
@@ -101,10 +98,9 @@ func TestKeyValueGet(t *testing.T) {
 }
 
 func TestKeyValueGetError(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, true)
+	kv, err := NewKeyValue(kvTestName, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 	kv.internalCache = map[string][]byte{"foo": []byte("bar")}
@@ -115,10 +111,9 @@ func TestKeyValueGetError(t *testing.T) {
 }
 
 func TestKeyValueSet(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, true)
+	kv, err := NewKeyValue(kvTestName, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 
@@ -133,10 +128,9 @@ func TestKeyValueSet(t *testing.T) {
 }
 
 func TestKeyValueSetWithInternalCache(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, true)
+	kv, err := NewKeyValue(kvTestName, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 	kv.internalCache = map[string][]byte{"foo": []byte("bar")}
@@ -153,10 +147,9 @@ func TestKeyValueSetWithInternalCache(t *testing.T) {
 }
 
 func TestKeyValueSetWithDuplicateData(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, true)
+	kv, err := NewKeyValue(kvTestName, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 	kv.internalCache = map[string][]byte{"foo": []byte("bar")}
@@ -176,10 +169,9 @@ func TestKeyValueSetWithDuplicateData(t *testing.T) {
 }
 
 func TestKeyValueForceSet(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, true)
+	kv, err := NewKeyValue(kvTestName, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 
@@ -194,10 +186,9 @@ func TestKeyValueForceSet(t *testing.T) {
 }
 
 func TestKeyValueForceSetWithInternalCache(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, true)
+	kv, err := NewKeyValue(kvTestName, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 	kv.internalCache = map[string][]byte{"foo": []byte("bar")}
@@ -214,10 +205,9 @@ func TestKeyValueForceSetWithInternalCache(t *testing.T) {
 }
 
 func TestKeyValueDelete(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, false)
+	kv, err := NewKeyValue(kvTestName, false)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 
@@ -237,10 +227,9 @@ func TestKeyValueDelete(t *testing.T) {
 }
 
 func TestKeyValueDeleteCached(t *testing.T) {
-	setKeyValueFakeKubeClient(t, testNamespace)
+	setKeyValueFakeKubeClient(t)
 
-	name := "testmap"
-	kv, err := NewKeyValue(name, true)
+	kv, err := NewKeyValue(kvTestName, true)
 	assert.NoError(t, err)
 	assert.NotNil(t, kv)
 

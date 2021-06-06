@@ -66,9 +66,10 @@ func (k *KeyValue) getMapData() (map[string][]byte, error) {
 
 	data, err := k.client.Get(k.configmapName)
 
-	if statusError, ok := err.(*errors.StatusError); ok && statusError.Status().Reason == v1.StatusReasonNotFound {
-		err = nil
-	} else if err != nil {
+	// Determine if the error was a "not found" error or not.
+	statusError, statusCastOk := err.(*errors.StatusError)
+	isNotFound := statusCastOk && statusError.Status().Reason == v1.StatusReasonNotFound
+	if err != nil && !isNotFound {
 		return nil, err
 	}
 

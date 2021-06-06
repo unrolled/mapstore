@@ -31,7 +31,7 @@ func TestNamespaceBadFile(t *testing.T) {
 	// Makes sure env is blank.
 	os.Unsetenv(namespaceEnv)
 	// Also set config path to something random.
-	namespacePath = namespacePath + "no-such-file"
+	namespacePath += "no-such-file"
 
 	_, err := getNamespace()
 	assert.Error(t, err)
