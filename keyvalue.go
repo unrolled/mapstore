@@ -12,16 +12,25 @@ import (
 // ErrKeyValueNotFound is returned when looking up a value that does not exist.
 var ErrKeyValueNotFound = fmt.Errorf("key was not found")
 
-// KeyValueInterface defines the required methods to satisfy the KeyValue implementation.
-type KeyValueInterface interface {
+// SimpleInterface defines the required methods to satisfy the KeyValue implementation.
+type SimpleInterface interface {
 	Keys() ([]string, error)
 	Get(key string) ([]byte, error)
 	Set(key string, value []byte) error
 	Delete(key string) error
+	Reset() error
 }
 
-// Verify we meet the requirements for our own internface ;)
-var _ KeyValueInterface = &KeyValue{}
+// ComplexInterface defines the required methods and a few optional methods for the KeyValue implementation.
+type ComplexInterface interface {
+	SimpleInterface
+	Raw() (map[string][]byte, error)
+	ForceSet(key string, value []byte) error
+}
+
+// Verify we meet the requirements for our own internfaces.
+var _ SimpleInterface = &KeyValue{}
+var _ ComplexInterface = &KeyValue{}
 
 // KeyValue is a thread safe key value store backed by a Kubernetes ConfigMap.
 type KeyValue struct {
@@ -119,6 +128,20 @@ func (k *KeyValue) Get(key string) ([]byte, error) {
 	return val, nil
 }
 
+// Raw returns the actual underlying map data.
+func (k *KeyValue) Raw() (map[string][]byte, error) {
+	k.RLock()
+	defer k.RUnlock()
+
+	// Grab the data map.
+	dataMap, err := k.getMapData()
+	if err != nil {
+		return nil, err
+	}
+
+	return dataMap, nil
+}
+
 // Set checks if the value has changed before performing the underlying save call.
 func (k *KeyValue) Set(key string, value []byte) error {
 	k.Lock()
@@ -172,4 +195,18 @@ func (k *KeyValue) Delete(key string) error {
 
 	// Write the ConfigMap.
 	return k.client.Set(k.configmapName, dataMap)
+}
+
+// Reset removes all the data from the underlying configmap.
+func (k *KeyValue) Reset() error {
+	k.Lock()
+	defer k.Unlock()
+
+	// Reset the internal cache if needed.
+	if k.cacheEnabled {
+		k.internalCache = map[string][]byte{}
+	}
+
+	// Write the ConfigMap with a new blank map.
+	return k.client.Set(k.configmapName, map[string][]byte{})
 }

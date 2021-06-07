@@ -110,6 +110,20 @@ func TestKeyValueGetError(t *testing.T) {
 	assert.Equal(t, ErrKeyValueNotFound, err)
 }
 
+func TestKeyValueRaw(t *testing.T) {
+	setKeyValueFakeKubeClient(t)
+
+	kv, err := NewKeyValue(kvTestName, true)
+	assert.NoError(t, err)
+	assert.NotNil(t, kv)
+	kv.internalCache = map[string][]byte{"foo": []byte("bar"), "num": []byte("123")}
+
+	// Should return data now.
+	raw, err := kv.Raw()
+	assert.NoError(t, err)
+	assert.Equal(t, kv.internalCache, raw)
+}
+
 func TestKeyValueSet(t *testing.T) {
 	setKeyValueFakeKubeClient(t)
 
@@ -245,4 +259,26 @@ func TestKeyValueDeleteCached(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, ErrKeyValueNotFound, err)
 	assert.Len(t, kv.internalCache, 0)
+}
+
+func TestKeyValueReset(t *testing.T) {
+	setKeyValueFakeKubeClient(t)
+
+	kv, err := NewKeyValue(kvTestName, false)
+	assert.NoError(t, err)
+	assert.NotNil(t, kv)
+
+	err = kv.Set("hello", []byte("world"))
+	assert.NoError(t, err)
+
+	val, err := kv.Get("hello")
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("world"), val)
+
+	err = kv.Reset()
+	assert.NoError(t, err)
+
+	_, err = kv.Get("hello")
+	assert.Error(t, err)
+	assert.Equal(t, ErrKeyValueNotFound, err)
 }

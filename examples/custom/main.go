@@ -15,7 +15,7 @@ type userObject struct {
 }
 
 type userStore struct {
-	kvStore mapstore.KeyValueInterface
+	kvStore mapstore.SimpleInterface
 }
 
 func (u *userStore) Get(key string) (*userObject, error) {
@@ -25,7 +25,7 @@ func (u *userStore) Get(key string) (*userObject, error) {
 	}
 
 	var result *userObject
-	json.Unmarshal(val, result)
+	err = json.Unmarshal(val, result)
 
 	return result, err
 }
