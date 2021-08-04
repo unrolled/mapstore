@@ -8,9 +8,12 @@ import (
 )
 
 func TestNamespaceEnv(t *testing.T) {
-	os.Setenv(namespaceEnv, testNamespace)
+	nsEnv := "mapstore-test-ns"
+	testNamespace := "foobar"
 
-	result, err := getNamespace()
+	os.Setenv(nsEnv, testNamespace)
+
+	result, err := getNamespaceFromEnv(nsEnv)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result)
 
@@ -18,9 +21,10 @@ func TestNamespaceEnv(t *testing.T) {
 }
 
 func TestNamespaceGoodFile(t *testing.T) {
+	testNamespace := "foobar"
 	os.Unsetenv(namespaceEnv)
 
-	result, err := getNamespace()
+	result, err := getNamespaceFromPath("./testdata/namespace")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result)
 
@@ -28,11 +32,8 @@ func TestNamespaceGoodFile(t *testing.T) {
 }
 
 func TestNamespaceBadFile(t *testing.T) {
-	// Makes sure env is blank.
 	os.Unsetenv(namespaceEnv)
-	// Also set config path to something random.
-	namespacePath += "no-such-file"
 
-	_, err := getNamespace()
+	_, err := getNamespaceFromPath("./testdata/nope-does-not-exist")
 	assert.Error(t, err)
 }

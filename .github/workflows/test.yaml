@@ -5,7 +5,7 @@ on:
   pull_request:
     branches:
       - "**"
-name: Test
+name: tests
 jobs:
   tests:
     strategy:

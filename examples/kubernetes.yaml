@@ -1,0 +1,53 @@
+# A service account needs to be defined and applied to your deployment/daemonset/statefulset.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mapstore-sa
+
+---
+# A role with the proper configmap permissions needs to be created.
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mapstore-role
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "create", "update", "delete"]
+    # Optionally you can list the configmap names to limit the scope of the role.
+    # resourceNames: ["my-mapstore-config-map-name", "list-all-map-names-one-at-a-time"]
+
+---
+# The above role needs to be bound to the above service account.
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mapstore-role-binding
+roleRef:
+  kind: Role
+  name: mapstore-role
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+  - kind: ServiceAccount
+    name: mapstore-sa
+    namespace: default # Change to match your namespace.
+
+---
+# The service account above needs to be applied to our deployment (or daemonset, or statefulset). See the "serviceAccountName" field below.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mapstore-example
+  namespace: default # Change to match your namespace.
+spec:
+  selector:
+    matchLabels:
+      app: mapstore-example
+  template:
+    metadata:
+      labels:
+        app: mapstore-example
+    spec:
+      serviceAccountName: mapstore-sa
+      containers:
+        - name: define-container-below

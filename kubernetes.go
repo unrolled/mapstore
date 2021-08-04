@@ -14,9 +14,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const MaxConfigMapSize = 1024
+const clusterConfigPathEnv = "MAPSTORE_CLUSTER_CONFIG_PATH"
 
-var clusterConfigPathEnv = "MAPSTORE_CLUSTER_CONFIG_PATH"
 var singleton *KubeClient
 
 // KubeClient wires up the connection to the cluster.
@@ -26,6 +25,7 @@ type KubeClient struct {
 	namespace string
 }
 
+// VerifyConnection is a helper function that creates a temporary configmap to ensure cluster connectivity and rbac settings.
 func VerifyConnection(testMapName string, client *KubeClient) error {
 	if client == nil {
 		var err error
@@ -128,6 +128,7 @@ func (k *KubeClient) getOrCreateConfigMap(name string) (*corev1.ConfigMap, error
 	return k.client.CoreV1().ConfigMaps(k.namespace).Create(k.ctx, cm, v1.CreateOptions{})
 }
 
+// Get returns the configmap data.
 func (k *KubeClient) Get(name string) (map[string][]byte, error) {
 	cm, err := k.getConfigMap(name)
 	if err != nil {
@@ -137,6 +138,7 @@ func (k *KubeClient) Get(name string) (map[string][]byte, error) {
 	return cm.BinaryData, err
 }
 
+// Set saves the configmap data.
 func (k *KubeClient) Set(name string, binaryData map[string][]byte) error {
 	// Attempt to update if it exists.
 	if cm, err := k.getConfigMap(name); err == nil {
@@ -159,6 +161,7 @@ func (k *KubeClient) Set(name string, binaryData map[string][]byte) error {
 	return err
 }
 
+// Delete removes the configmap entirely.
 func (k *KubeClient) Delete(name string) error {
 	err := k.client.CoreV1().ConfigMaps(k.namespace).Delete(k.ctx, name, v1.DeleteOptions{})
 

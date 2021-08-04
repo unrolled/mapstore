@@ -13,11 +13,15 @@ const (
 )
 
 func main() {
+	// By allowing the config map to be stored internally, we reduce the amount of lookups required.
+	// But you need to be aware of the limitations (see the main README.md for documentation)!
 	cacheConfigMapInternally := true
-	mapStore, err := mapstore.NewKeyValue(configmapName, cacheConfigMapInternally)
+
+	// Create a new mapstore.
+	mapStore, err := mapstore.New(configmapName, cacheConfigMapInternally)
 	if err != nil {
-		log.Fatalf("error creating mapstore: %v", err)
 		// If you receive this error, you likely need to give the appropriate RBAC permissions to your pod.
+		log.Fatalf("error creating mapstore (possible rbac issue?): %v", err)
 	}
 
 	// Setting a value. The underlying configmap data has to be a byte slice.

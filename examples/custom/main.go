@@ -15,7 +15,7 @@ type userObject struct {
 }
 
 type userStore struct {
-	kvStore mapstore.SimpleInterface
+	kvStore mapstore.Interface
 }
 
 func (u *userStore) Get(key string) (*userObject, error) {
@@ -40,14 +40,18 @@ func (u *userStore) Set(key string, val *userObject) error {
 }
 
 func main() {
+	// Because we are not caching the config map, every request will require going out and looking up the config map.
+	// But you need to be aware of the limitations (see main README.md for documentation)!
 	cacheConfigMapInternally := false
-	mapStore, err := mapstore.NewKeyValue("my-custom-config-map-name", cacheConfigMapInternally)
+
+	mapStore, err := mapstore.New("my-custom-config-map-name", cacheConfigMapInternally)
 	if err != nil {
-		log.Fatalf("error creating mapstore: %v", err)
+		// If you receive this error, you likely need to give the appropriate RBAC permissions to your pod.
+		log.Fatalf("error creating mapstore (possible rbac issue?): %v", err)
 	}
 
 	wrapper := &userStore{mapStore}
-	initialData := &userObject{ID: 1234, UserName: "FooBar", Email: "mapstore@unrolled.ca"}
+	initialData := &userObject{ID: 1234, UserName: "FooBar", Email: "mapstore@example.com"}
 
 	// Setting the user data.
 	err = wrapper.Set("my-key", initialData)

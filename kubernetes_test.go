@@ -11,10 +11,13 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-const k8sTestName = "foobar"
+const (
+	k8sTestName      = "foobar"
+	k8sTestNamespace = "ns-foobar"
+)
 
 func fakeKubernetesClient() *KubeClient {
-	return &KubeClient{fake.NewSimpleClientset(), context.Background(), testNamespace}
+	return &KubeClient{fake.NewSimpleClientset(), context.Background(), k8sTestNamespace}
 }
 
 func TestKubernetesVerifyConnection(t *testing.T) {
@@ -27,9 +30,7 @@ func TestKubernetesSingleton(t *testing.T) {
 	assert.Nil(t, singleton)
 
 	// Setup some fake values.
-	namespaceEnv = "MAPSTORE_NAMESPACE_TEST"
 	os.Setenv(namespaceEnv, "foo123")
-	clusterConfigPathEnv = "MAPSTORE_CLUSTER_CONFIG_PATH_TEST"
 	os.Setenv(clusterConfigPathEnv, "./testdata/config.yaml")
 
 	// Create the client.
@@ -45,8 +46,8 @@ func TestKubernetesGetConfigMap(t *testing.T) {
 	kc := fakeKubernetesClient()
 
 	// Create a configmap that we can fetch.
-	_, err := kc.client.CoreV1().ConfigMaps(testNamespace).Create(kc.ctx, &corev1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: testNamespace},
+	_, err := kc.client.CoreV1().ConfigMaps(k8sTestNamespace).Create(kc.ctx, &corev1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: k8sTestNamespace},
 		BinaryData: map[string][]byte{"foo": []byte("bar")},
 	}, v1.CreateOptions{})
 	assert.NoError(t, err)
@@ -72,8 +73,8 @@ func TestKubernetesGet(t *testing.T) {
 	kc := fakeKubernetesClient()
 
 	// Create a configmap that we can fetch.
-	_, err := kc.client.CoreV1().ConfigMaps(testNamespace).Create(kc.ctx, &corev1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: testNamespace},
+	_, err := kc.client.CoreV1().ConfigMaps(k8sTestNamespace).Create(kc.ctx, &corev1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: k8sTestNamespace},
 		BinaryData: data,
 	}, v1.CreateOptions{})
 	assert.NoError(t, err)
@@ -115,8 +116,8 @@ func TestKubernetesGetOrCreateWithExistingConfigMap(t *testing.T) {
 	kc := fakeKubernetesClient()
 
 	// Create a configmap that we can fetch.
-	_, err := kc.client.CoreV1().ConfigMaps(testNamespace).Create(kc.ctx, &corev1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: testNamespace},
+	_, err := kc.client.CoreV1().ConfigMaps(k8sTestNamespace).Create(kc.ctx, &corev1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: k8sTestNamespace},
 		BinaryData: data,
 	}, v1.CreateOptions{})
 	assert.NoError(t, err)
@@ -147,8 +148,8 @@ func TestKubernetesSetUpdate(t *testing.T) {
 	kc := fakeKubernetesClient()
 
 	// Create a configmap that we can fetch.
-	_, err := kc.client.CoreV1().ConfigMaps(testNamespace).Create(kc.ctx, &corev1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: testNamespace},
+	_, err := kc.client.CoreV1().ConfigMaps(k8sTestNamespace).Create(kc.ctx, &corev1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: k8sTestNamespace},
 		BinaryData: data,
 	}, v1.CreateOptions{})
 	assert.NoError(t, err)
@@ -168,8 +169,8 @@ func TestKubernetesDelete(t *testing.T) {
 	kc := fakeKubernetesClient()
 
 	// Create a configmap that we can fetch.
-	_, err := kc.client.CoreV1().ConfigMaps(testNamespace).Create(kc.ctx, &corev1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: testNamespace},
+	_, err := kc.client.CoreV1().ConfigMaps(k8sTestNamespace).Create(kc.ctx, &corev1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: k8sTestNamespace},
 		BinaryData: map[string][]byte{"foo": []byte("bar")},
 	}, v1.CreateOptions{})
 	assert.NoError(t, err)

@@ -12,28 +12,28 @@ import (
 // ErrKeyValueNotFound is returned when looking up a value that does not exist.
 var ErrKeyValueNotFound = fmt.Errorf("key was not found")
 
-// SimpleInterface defines the required methods to satisfy the KeyValue implementation.
-type SimpleInterface interface {
+// Interface defines the required methods to satisfy the Manager implementation.
+type Interface interface {
 	Keys() ([]string, error)
 	Get(key string) ([]byte, error)
 	Set(key string, value []byte) error
 	Delete(key string) error
-	Reset() error
+	Truncate() error
 }
 
-// ComplexInterface defines the required methods and a few optional methods for the KeyValue implementation.
-type ComplexInterface interface {
-	SimpleInterface
+// AdvancedInterface defines the required methods and a few optional methods for the Manager implementation.
+type AdvancedInterface interface {
+	Interface
 	Raw() (map[string][]byte, error)
 	ForceSet(key string, value []byte) error
 }
 
 // Verify we meet the requirements for our own internfaces.
-var _ SimpleInterface = &KeyValue{}
-var _ ComplexInterface = &KeyValue{}
+var _ Interface = &Manager{}
+var _ AdvancedInterface = &Manager{}
 
-// KeyValue is a thread safe key value store backed by a Kubernetes ConfigMap.
-type KeyValue struct {
+// Manager is a thread safe key value store backed by a Kubernetes ConfigMap.
+type Manager struct {
 	*sync.RWMutex
 	configmapName string
 	client        *KubeClient
@@ -42,7 +42,7 @@ type KeyValue struct {
 }
 
 // NewKeyValue returns a newly setup instance of KeyValue.
-func NewKeyValue(cmName string, cacheInternally bool) (*KeyValue, error) {
+func New(cmName string, cacheInternally bool) (*Manager, error) {
 	// Grab the KubeClient.
 	kubeClient, err := GetKubeClient()
 	if err != nil {
@@ -59,7 +59,7 @@ func NewKeyValue(cmName string, cacheInternally bool) (*KeyValue, error) {
 		}
 	}
 
-	return &KeyValue{
+	return &Manager{
 		RWMutex:       &sync.RWMutex{},
 		configmapName: cmName,
 		client:        kubeClient,
@@ -68,7 +68,7 @@ func NewKeyValue(cmName string, cacheInternally bool) (*KeyValue, error) {
 	}, nil
 }
 
-func (k *KeyValue) getMapData() (map[string][]byte, error) {
+func (k *Manager) getMapData() (map[string][]byte, error) {
 	if k.cacheEnabled {
 		return k.internalCache, nil
 	}
@@ -82,6 +82,7 @@ func (k *KeyValue) getMapData() (map[string][]byte, error) {
 		return nil, err
 	}
 
+	// If data hasn't been set yet, create an empty map.
 	if data == nil {
 		data = map[string][]byte{}
 	}
@@ -89,7 +90,7 @@ func (k *KeyValue) getMapData() (map[string][]byte, error) {
 	return data, nil
 }
 
-func (k *KeyValue) Keys() ([]string, error) {
+func (k *Manager) Keys() ([]string, error) {
 	k.RLock()
 	defer k.RUnlock()
 
@@ -109,7 +110,7 @@ func (k *KeyValue) Keys() ([]string, error) {
 }
 
 // Get uses the supplied key and attempts to return the coorsponding value from the ConfigMap.
-func (k *KeyValue) Get(key string) ([]byte, error) {
+func (k *Manager) Get(key string) ([]byte, error) {
 	k.RLock()
 	defer k.RUnlock()
 
@@ -129,7 +130,7 @@ func (k *KeyValue) Get(key string) ([]byte, error) {
 }
 
 // Raw returns the actual underlying map data.
-func (k *KeyValue) Raw() (map[string][]byte, error) {
+func (k *Manager) Raw() (map[string][]byte, error) {
 	k.RLock()
 	defer k.RUnlock()
 
@@ -143,7 +144,7 @@ func (k *KeyValue) Raw() (map[string][]byte, error) {
 }
 
 // Set checks if the value has changed before performing the underlying save call.
-func (k *KeyValue) Set(key string, value []byte) error {
+func (k *Manager) Set(key string, value []byte) error {
 	k.Lock()
 	defer k.Unlock()
 
@@ -151,14 +152,14 @@ func (k *KeyValue) Set(key string, value []byte) error {
 }
 
 // ForceSet is the same as Set, but does not check if the values are equal first.
-func (k *KeyValue) ForceSet(key string, value []byte) error {
+func (k *Manager) ForceSet(key string, value []byte) error {
 	k.Lock()
 	defer k.Unlock()
 
 	return k.set(key, value, true)
 }
 
-func (k *KeyValue) set(key string, value []byte, force bool) error {
+func (k *Manager) set(key string, value []byte, force bool) error {
 	// Grab the data map.
 	dataMap, err := k.getMapData()
 	if err != nil {
@@ -180,7 +181,7 @@ func (k *KeyValue) set(key string, value []byte, force bool) error {
 }
 
 // Delete removes the given key from the underlying configmap.
-func (k *KeyValue) Delete(key string) error {
+func (k *Manager) Delete(key string) error {
 	k.Lock()
 	defer k.Unlock()
 
@@ -197,8 +198,8 @@ func (k *KeyValue) Delete(key string) error {
 	return k.client.Set(k.configmapName, dataMap)
 }
 
-// Reset removes all the data from the underlying configmap.
-func (k *KeyValue) Reset() error {
+// Truncate removes all the data from the underlying configmap.
+func (k *Manager) Truncate() error {
 	k.Lock()
 	defer k.Unlock()
 
