@@ -1,3 +1,4 @@
+//nolint
 package main
 
 import (
@@ -12,7 +13,7 @@ const (
 	myKey         = "my-key"                    // This is the key used when writing the key-value pair to the ConfigMap.
 )
 
-func main_basic() {
+func basic() {
 	// By allowing the config map to be stored internally, we reduce the amount of lookups required.
 	// But you need to be aware of the limitations (see the main README.md for documentation)!
 	cacheConfigMapInternally := true

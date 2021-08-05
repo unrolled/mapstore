@@ -1,3 +1,4 @@
+//nolint
 package main
 
 import (
@@ -39,7 +40,7 @@ func (u *userStore) Set(key string, val *userObject) error {
 	return u.kvStore.Set(key, result)
 }
 
-func main_custom() {
+func custom() {
 	// Because we are not caching the config map, every request will require going out and looking up the config map.
 	// But you need to be aware of the limitations (see main README.md for documentation)!
 	cacheConfigMapInternally := false
