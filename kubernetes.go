@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	_ "k8s.io/client-go/plugin/pkg/client/auth" // Import auth for local cluster configs.
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -25,10 +25,11 @@ type KubeClient struct {
 	namespace string
 }
 
-// VerifyConnection is a helper function that creates a temporary configmap to ensure cluster connectivity and rbac settings.
+// VerifyConnection is a helper function that creates a temporary ConfigMap to ensure cluster connectivity and rbac settings.
 func VerifyConnection(testMapName string, client *KubeClient) error {
 	if client == nil {
 		var err error
+
 		client, err = GetKubeClient()
 		if err != nil {
 			return err
@@ -48,7 +49,7 @@ func VerifyConnection(testMapName string, client *KubeClient) error {
 	if data, err := client.Get(testMapName); err != nil {
 		return err
 	} else if dataVal, ok := data["test"]; !ok || string(dataVal) != val {
-		return fmt.Errorf("got configmap, but data is mismatched")
+		return fmt.Errorf("data is mismatched")
 	}
 
 	// Delete a value.
@@ -128,7 +129,7 @@ func (k *KubeClient) getOrCreateConfigMap(name string) (*corev1.ConfigMap, error
 	return k.client.CoreV1().ConfigMaps(k.namespace).Create(k.ctx, cm, v1.CreateOptions{})
 }
 
-// Get returns the configmap data.
+// Get returns the ConfigMap data.
 func (k *KubeClient) Get(name string) (map[string][]byte, error) {
 	cm, err := k.getConfigMap(name)
 	if err != nil {
@@ -138,7 +139,7 @@ func (k *KubeClient) Get(name string) (map[string][]byte, error) {
 	return cm.BinaryData, err
 }
 
-// Set saves the configmap data.
+// Set saves the ConfigMap data.
 func (k *KubeClient) Set(name string, binaryData map[string][]byte) error {
 	// Attempt to update if it exists.
 	if cm, err := k.getConfigMap(name); err == nil {
@@ -161,7 +162,7 @@ func (k *KubeClient) Set(name string, binaryData map[string][]byte) error {
 	return err
 }
 
-// Delete removes the configmap entirely.
+// Delete removes the ConfigMap entirely.
 func (k *KubeClient) Delete(name string) error {
 	err := k.client.CoreV1().ConfigMaps(k.namespace).Delete(k.ctx, name, v1.DeleteOptions{})
 

@@ -45,14 +45,14 @@ func TestKubernetesSingleton(t *testing.T) {
 func TestKubernetesGetConfigMap(t *testing.T) {
 	kc := fakeKubernetesClient()
 
-	// Create a configmap that we can fetch.
+	// Create a ConfigMap that we can fetch.
 	_, err := kc.client.CoreV1().ConfigMaps(k8sTestNamespace).Create(kc.ctx, &corev1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: k8sTestNamespace},
 		BinaryData: map[string][]byte{"foo": []byte("bar")},
 	}, v1.CreateOptions{})
 	assert.NoError(t, err)
 
-	// Now try fetching the configmap.
+	// Now try fetching the ConfigMap.
 	cm, err := kc.getConfigMap(k8sTestName)
 	assert.NoError(t, err)
 	assert.NotNil(t, cm)
@@ -62,7 +62,7 @@ func TestKubernetesGetConfigMap(t *testing.T) {
 func TestKubernetesGetConfigMapError(t *testing.T) {
 	kc := fakeKubernetesClient()
 
-	// Now try fetching the configmap.
+	// Now try fetching the ConfigMap.
 	cm, err := kc.getConfigMap(k8sTestName)
 	assert.Error(t, err)
 	assert.Nil(t, cm)
@@ -72,14 +72,14 @@ func TestKubernetesGet(t *testing.T) {
 	data := map[string][]byte{"foo": []byte("bar")}
 	kc := fakeKubernetesClient()
 
-	// Create a configmap that we can fetch.
+	// Create a ConfigMap that we can fetch.
 	_, err := kc.client.CoreV1().ConfigMaps(k8sTestNamespace).Create(kc.ctx, &corev1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: k8sTestNamespace},
 		BinaryData: data,
 	}, v1.CreateOptions{})
 	assert.NoError(t, err)
 
-	// Now try fetching the configmap.
+	// Now try fetching the ConfigMap.
 	result, err := kc.Get(k8sTestName)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -89,7 +89,7 @@ func TestKubernetesGet(t *testing.T) {
 func TestKubernetesGetError(t *testing.T) {
 	kc := fakeKubernetesClient()
 
-	// Now try fetching the configmap.
+	// Now try fetching the ConfigMap.
 	result, err := kc.Get(k8sTestName)
 	assert.Error(t, err)
 	assert.Nil(t, result)
@@ -98,13 +98,13 @@ func TestKubernetesGetError(t *testing.T) {
 func TestKubernetesGetOrCreateWithNoConfigMap(t *testing.T) {
 	kc := fakeKubernetesClient()
 
-	// Now try fetching the configmap.
+	// Now try fetching the ConfigMap.
 	result, err := kc.getOrCreateConfigMap(k8sTestName)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Empty(t, result.BinaryData)
 
-	// Create a configmap that we can fetch.
+	// Create a ConfigMap that we can fetch.
 	cm, err := kc.getConfigMap(k8sTestName)
 	assert.NoError(t, err)
 	assert.NotNil(t, cm)
@@ -115,14 +115,14 @@ func TestKubernetesGetOrCreateWithExistingConfigMap(t *testing.T) {
 	data := map[string][]byte{"foo": []byte("bar")}
 	kc := fakeKubernetesClient()
 
-	// Create a configmap that we can fetch.
+	// Create a ConfigMap that we can fetch.
 	_, err := kc.client.CoreV1().ConfigMaps(k8sTestNamespace).Create(kc.ctx, &corev1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: k8sTestNamespace},
 		BinaryData: data,
 	}, v1.CreateOptions{})
 	assert.NoError(t, err)
 
-	// Now try fetching the configmap.
+	// Now try fetching the ConfigMap.
 	result, err := kc.getOrCreateConfigMap(k8sTestName)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -136,7 +136,7 @@ func TestKubernetesSetCreate(t *testing.T) {
 	err := kc.Set(k8sTestName, data)
 	assert.NoError(t, err)
 
-	// Now try fetching the configmap.
+	// Now try fetching the ConfigMap.
 	result, err := kc.Get(k8sTestName)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -147,7 +147,7 @@ func TestKubernetesSetUpdate(t *testing.T) {
 	data := map[string][]byte{"foo": []byte("bar")}
 	kc := fakeKubernetesClient()
 
-	// Create a configmap that we can fetch.
+	// Create a ConfigMap that we can fetch.
 	_, err := kc.client.CoreV1().ConfigMaps(k8sTestNamespace).Create(kc.ctx, &corev1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: k8sTestNamespace},
 		BinaryData: data,
@@ -158,7 +158,7 @@ func TestKubernetesSetUpdate(t *testing.T) {
 	err = kc.Set(k8sTestName, newData)
 	assert.NoError(t, err)
 
-	// Now try fetching the configmap.
+	// Now try fetching the ConfigMap.
 	result, err := kc.Get(k8sTestName)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -168,14 +168,14 @@ func TestKubernetesSetUpdate(t *testing.T) {
 func TestKubernetesDelete(t *testing.T) {
 	kc := fakeKubernetesClient()
 
-	// Create a configmap that we can fetch.
+	// Create a ConfigMap that we can fetch.
 	_, err := kc.client.CoreV1().ConfigMaps(k8sTestNamespace).Create(kc.ctx, &corev1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{Name: k8sTestName, Namespace: k8sTestNamespace},
 		BinaryData: map[string][]byte{"foo": []byte("bar")},
 	}, v1.CreateOptions{})
 	assert.NoError(t, err)
 
-	// Now try fetching the configmap.
+	// Now try fetching the ConfigMap.
 	err = kc.Delete(k8sTestName)
 	assert.NoError(t, err)
 }

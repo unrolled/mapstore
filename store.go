@@ -9,8 +9,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// ErrKeyValueNotFound is returned when looking up a value that does not exist.
-var ErrKeyValueNotFound = fmt.Errorf("key was not found")
+// ErrKeyNotFound is returned when looking up a value that does not exist.
+var ErrKeyNotFound = fmt.Errorf("key was not found")
 
 // Interface defines the required methods to satisfy the Manager implementation.
 type Interface interface {
@@ -35,13 +35,13 @@ var _ AdvancedInterface = &Manager{}
 // Manager is a thread safe key value store backed by a Kubernetes ConfigMap.
 type Manager struct {
 	*sync.RWMutex
-	configmapName string
+	configMapName string
 	client        *KubeClient
 	cacheEnabled  bool
 	internalCache map[string][]byte
 }
 
-// NewKeyValue returns a newly setup instance of KeyValue.
+// New returns a newly setup Manager instance.
 func New(cmName string, cacheInternally bool) (*Manager, error) {
 	// Grab the KubeClient.
 	kubeClient, err := GetKubeClient()
@@ -61,7 +61,7 @@ func New(cmName string, cacheInternally bool) (*Manager, error) {
 
 	return &Manager{
 		RWMutex:       &sync.RWMutex{},
-		configmapName: cmName,
+		configMapName: cmName,
 		client:        kubeClient,
 		cacheEnabled:  cacheInternally,
 		internalCache: cache,
@@ -73,7 +73,7 @@ func (k *Manager) getMapData() (map[string][]byte, error) {
 		return k.internalCache, nil
 	}
 
-	data, err := k.client.Get(k.configmapName)
+	data, err := k.client.Get(k.configMapName)
 
 	// Determine if the error was a "not found" error or not.
 	statusError, statusCastOk := err.(*errors.StatusError)
@@ -90,6 +90,7 @@ func (k *Manager) getMapData() (map[string][]byte, error) {
 	return data, nil
 }
 
+// Keys returns all the key names from the ConfigMap.
 func (k *Manager) Keys() ([]string, error) {
 	k.RLock()
 	defer k.RUnlock()
@@ -123,7 +124,7 @@ func (k *Manager) Get(key string) ([]byte, error) {
 	// Lookup the value, return not found if it failed.
 	val, ok := dataMap[key]
 	if !ok {
-		return nil, ErrKeyValueNotFound
+		return nil, ErrKeyNotFound
 	}
 
 	return val, nil
@@ -177,10 +178,10 @@ func (k *Manager) set(key string, value []byte, force bool) error {
 	dataMap[key] = value
 
 	// Write the ConfigMap.
-	return k.client.Set(k.configmapName, dataMap)
+	return k.client.Set(k.configMapName, dataMap)
 }
 
-// Delete removes the given key from the underlying configmap.
+// Delete removes the given key from the underlying ConfigMap.
 func (k *Manager) Delete(key string) error {
 	k.Lock()
 	defer k.Unlock()
@@ -195,10 +196,10 @@ func (k *Manager) Delete(key string) error {
 	delete(dataMap, key)
 
 	// Write the ConfigMap.
-	return k.client.Set(k.configmapName, dataMap)
+	return k.client.Set(k.configMapName, dataMap)
 }
 
-// Truncate removes all the data from the underlying configmap.
+// Truncate removes all the data from the underlying ConfigMap.
 func (k *Manager) Truncate() error {
 	k.Lock()
 	defer k.Unlock()
@@ -209,5 +210,5 @@ func (k *Manager) Truncate() error {
 	}
 
 	// Write the ConfigMap with a new blank map.
-	return k.client.Set(k.configmapName, map[string][]byte{})
+	return k.client.Set(k.configMapName, map[string][]byte{})
 }
