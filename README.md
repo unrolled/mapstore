@@ -15,8 +15,8 @@ Kubernetes can not guarantee exclusive access to a ConfigMap, so we need to be a
 ## Internal caching
 MapStore has the ability to hold the data of the ConfigMap in memory for quick lookups and reducing unnecessary requests to the Kubernetes API. This should only be enabled when you can guarantee no other app or process is accessing the same ConfigMap.
 ```go
-	cacheConfigMapInternally := true
-	mapStore, err := mapstore.New("my-test-cm", cacheConfigMapInternally)
+cacheConfigMapInternally := true
+mapStore, err := mapstore.New("my-test-cm", cacheConfigMapInternally)
 ```
 
 ## Size limitations
