@@ -16,13 +16,8 @@ const (
 	k8sTestNamespace = "ns-foobar"
 )
 
-func fakeKubernetesClient() *KubeClient {
-	return &KubeClient{fake.NewSimpleClientset(), context.Background(), k8sTestNamespace}
-}
-
-func TestKubernetesVerifyConnection(t *testing.T) {
-	err := VerifyConnection("testmap", fakeKubernetesClient())
-	assert.NoError(t, err)
+func fakeKubernetesClient() *kubeClient {
+	return &kubeClient{fake.NewSimpleClientset(), context.Background(), k8sTestNamespace}
 }
 
 func TestKubernetesSingleton(t *testing.T) {
@@ -34,7 +29,7 @@ func TestKubernetesSingleton(t *testing.T) {
 	os.Setenv(clusterConfigPathEnv, "./testdata/config.yaml")
 
 	// Create the client.
-	client, err := GetKubeClient()
+	client, err := getKubeClient()
 	assert.NoError(t, err)
 	assert.NotNil(t, client)
 
@@ -80,7 +75,7 @@ func TestKubernetesGet(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Now try fetching the ConfigMap.
-	result, err := kc.Get(k8sTestName)
+	result, err := kc.get(k8sTestName)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, data, result)
@@ -90,7 +85,7 @@ func TestKubernetesGetError(t *testing.T) {
 	kc := fakeKubernetesClient()
 
 	// Now try fetching the ConfigMap.
-	result, err := kc.Get(k8sTestName)
+	result, err := kc.get(k8sTestName)
 	assert.Error(t, err)
 	assert.Nil(t, result)
 }
@@ -133,11 +128,11 @@ func TestKubernetesSetCreate(t *testing.T) {
 	data := map[string][]byte{"foo": []byte("bar")}
 	kc := fakeKubernetesClient()
 
-	err := kc.Set(k8sTestName, data)
+	err := kc.set(k8sTestName, data)
 	assert.NoError(t, err)
 
 	// Now try fetching the ConfigMap.
-	result, err := kc.Get(k8sTestName)
+	result, err := kc.get(k8sTestName)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, data, result)
@@ -155,11 +150,11 @@ func TestKubernetesSetUpdate(t *testing.T) {
 	assert.NoError(t, err)
 
 	newData := map[string][]byte{"foo": []byte("bar"), "num": []byte("one")}
-	err = kc.Set(k8sTestName, newData)
+	err = kc.set(k8sTestName, newData)
 	assert.NoError(t, err)
 
 	// Now try fetching the ConfigMap.
-	result, err := kc.Get(k8sTestName)
+	result, err := kc.get(k8sTestName)
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, newData, result)
@@ -176,13 +171,13 @@ func TestKubernetesDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Now try fetching the ConfigMap.
-	err = kc.Delete(k8sTestName)
+	err = kc.delete(k8sTestName)
 	assert.NoError(t, err)
 }
 
 func TestKubernetesDeleteError(t *testing.T) {
 	kc := fakeKubernetesClient()
 
-	err := kc.Delete(k8sTestName)
+	err := kc.delete(k8sTestName)
 	assert.NoError(t, err)
 }

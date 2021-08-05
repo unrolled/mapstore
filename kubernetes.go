@@ -2,7 +2,6 @@ package mapstore
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	corev1 "k8s.io/api/core/v1"
@@ -16,48 +15,16 @@ import (
 
 const clusterConfigPathEnv = "MAPSTORE_CLUSTER_CONFIG_PATH"
 
-var singleton *KubeClient
+var singleton *kubeClient
 
-// KubeClient wires up the connection to the cluster.
-type KubeClient struct {
+// kubeClient wires up the connection to the cluster.
+type kubeClient struct {
 	client    kubernetes.Interface
 	ctx       context.Context
 	namespace string
 }
 
-// VerifyConnection is a helper function that creates a temporary ConfigMap to ensure cluster connectivity and rbac settings.
-func VerifyConnection(testMapName string, client *KubeClient) error {
-	if client == nil {
-		var err error
-
-		client, err = GetKubeClient()
-		if err != nil {
-			return err
-		}
-	}
-
-	key := "test"
-	val := "ok"
-	testData := map[string][]byte{key: []byte(val)}
-
-	// Set a value.
-	if err := client.Set(testMapName, testData); err != nil {
-		return err
-	}
-
-	// Get a value.
-	if data, err := client.Get(testMapName); err != nil {
-		return err
-	} else if dataVal, ok := data["test"]; !ok || string(dataVal) != val {
-		return fmt.Errorf("data is mismatched")
-	}
-
-	// Delete a value.
-	return client.Delete(testMapName)
-}
-
-// GetKubeClient returns the kubernetes client singleton.
-func GetKubeClient() (*KubeClient, error) {
+func getKubeClient() (*kubeClient, error) {
 	// Try to return the singleton first.
 	if singleton != nil {
 		return singleton, nil
@@ -95,16 +62,16 @@ func GetKubeClient() (*KubeClient, error) {
 	}
 
 	// Set the singleton.
-	singleton = &KubeClient{clientset, context.Background(), ns}
+	singleton = &kubeClient{clientset, context.Background(), ns}
 
 	return singleton, nil
 }
 
-func (k *KubeClient) getConfigMap(name string) (*corev1.ConfigMap, error) {
+func (k *kubeClient) getConfigMap(name string) (*corev1.ConfigMap, error) {
 	return k.client.CoreV1().ConfigMaps(k.namespace).Get(k.ctx, name, v1.GetOptions{})
 }
 
-func (k *KubeClient) getOrCreateConfigMap(name string) (*corev1.ConfigMap, error) {
+func (k *kubeClient) getOrCreateConfigMap(name string) (*corev1.ConfigMap, error) {
 	// Attempt to fetch the existing ConfigMap.
 	cm, err := k.client.CoreV1().ConfigMaps(k.namespace).Get(k.ctx, name, v1.GetOptions{})
 
@@ -129,8 +96,7 @@ func (k *KubeClient) getOrCreateConfigMap(name string) (*corev1.ConfigMap, error
 	return k.client.CoreV1().ConfigMaps(k.namespace).Create(k.ctx, cm, v1.CreateOptions{})
 }
 
-// Get returns the ConfigMap data.
-func (k *KubeClient) Get(name string) (map[string][]byte, error) {
+func (k *kubeClient) get(name string) (map[string][]byte, error) {
 	cm, err := k.getConfigMap(name)
 	if err != nil {
 		return nil, err
@@ -139,8 +105,7 @@ func (k *KubeClient) Get(name string) (map[string][]byte, error) {
 	return cm.BinaryData, err
 }
 
-// Set saves the ConfigMap data.
-func (k *KubeClient) Set(name string, binaryData map[string][]byte) error {
+func (k *kubeClient) set(name string, binaryData map[string][]byte) error {
 	// Attempt to update if it exists.
 	if cm, err := k.getConfigMap(name); err == nil {
 		cm.BinaryData = binaryData
@@ -162,8 +127,7 @@ func (k *KubeClient) Set(name string, binaryData map[string][]byte) error {
 	return err
 }
 
-// Delete removes the ConfigMap entirely.
-func (k *KubeClient) Delete(name string) error {
+func (k *kubeClient) delete(name string) error {
 	err := k.client.CoreV1().ConfigMaps(k.namespace).Delete(k.ctx, name, v1.DeleteOptions{})
 
 	// We can safely ignore not found errors.

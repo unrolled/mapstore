@@ -36,7 +36,7 @@ var _ AdvancedInterface = &Manager{}
 type Manager struct {
 	*sync.RWMutex
 	configMapName string
-	client        *KubeClient
+	client        *kubeClient
 	cacheEnabled  bool
 	internalCache map[string][]byte
 }
@@ -44,7 +44,7 @@ type Manager struct {
 // New returns a newly setup Manager instance.
 func New(cmName string, cacheInternally bool) (*Manager, error) {
 	// Grab the KubeClient.
-	kubeClient, err := GetKubeClient()
+	kubeClient, err := getKubeClient()
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (k *Manager) getMapData() (map[string][]byte, error) {
 		return k.internalCache, nil
 	}
 
-	data, err := k.client.Get(k.configMapName)
+	data, err := k.client.get(k.configMapName)
 
 	// Determine if the error was a "not found" error or not.
 	statusError, statusCastOk := err.(*errors.StatusError)
@@ -178,7 +178,7 @@ func (k *Manager) set(key string, value []byte, force bool) error {
 	dataMap[key] = value
 
 	// Write the ConfigMap.
-	return k.client.Set(k.configMapName, dataMap)
+	return k.client.set(k.configMapName, dataMap)
 }
 
 // Delete removes the given key from the underlying ConfigMap.
@@ -196,7 +196,7 @@ func (k *Manager) Delete(key string) error {
 	delete(dataMap, key)
 
 	// Write the ConfigMap.
-	return k.client.Set(k.configMapName, dataMap)
+	return k.client.set(k.configMapName, dataMap)
 }
 
 // Truncate removes all the data from the underlying ConfigMap.
@@ -210,5 +210,5 @@ func (k *Manager) Truncate() error {
 	}
 
 	// Write the ConfigMap with a new blank map.
-	return k.client.Set(k.configMapName, map[string][]byte{})
+	return k.client.set(k.configMapName, map[string][]byte{})
 }

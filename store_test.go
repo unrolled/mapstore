@@ -15,7 +15,7 @@ const (
 )
 
 func setFakeKubeClient(t *testing.T) {
-	singleton = &KubeClient{fake.NewSimpleClientset(), context.Background(), storeTestNamespace}
+	singleton = &kubeClient{fake.NewSimpleClientset(), context.Background(), storeTestNamespace}
 	t.Cleanup(func() { singleton = nil })
 }
 
