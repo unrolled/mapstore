@@ -11,7 +11,7 @@ Package mapstore facilitates saving key value pairs into a Kubernetes ConfigMap.
   )
 
   func main() {
-      mapStore, err := mapstore.NewKeyValue("my-custom-config-map-name", false)
+      mapStore, err := mapstore.New("my-custom-config-map-name", false)
       if err != nil {
           log.Fatalf("error creating mapstore (possible rbac issue?): %v", err)
       }
