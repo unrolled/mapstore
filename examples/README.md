@@ -1,7 +1,7 @@
 # Examples
 
-[Basic](basic/main.go) - Simple example that uses the mapstore directly.
+[Basic](basic.go) - Simple example that uses the API directly.
 
-[Custom](custom/main.go) - Shows how to setup a wrapper that uses json serialization.
+[Custom](custom.go) - Shows how to setup a wrapper that uses json serialization.
 
 [Kubernetes](kubernetes.yaml) - Describes the role/binding and service account configuration.
